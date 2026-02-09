@@ -58,17 +58,19 @@ export class AppRoot extends LitElement {
       <div class="max-w-7xl mx-auto">
         <app-header></app-header>
         
-        <app-tabs 
-          .currentTab=${this.currentTab}
-          @tab-change=${this.handleTabChange}
-          @settings-open=${this.handleSettingsOpen}
-        ></app-tabs>
+        ${store.config ? html`
+          <app-tabs 
+            .currentTab=${this.currentTab}
+            @tab-change=${this.handleTabChange}
+            @settings-open=${this.handleSettingsOpen}
+          ></app-tabs>
 
-        ${this.currentTab === 'dashboard' ? html`<dashboard-tab></dashboard-tab>` : ''}
-        ${this.currentTab === 'weight' ? html`<weight-tab></weight-tab>` : ''}
-        ${this.currentTab === 'calories' ? html`<calories-tab></calories-tab>` : ''}
-        ${this.currentTab === 'history' ? html`<history-tab></history-tab>` : ''}
-        ${this.currentTab === 'export' ? html`<export-tab></export-tab>` : ''}
+          ${this.currentTab === 'dashboard' ? html`<dashboard-tab></dashboard-tab>` : ''}
+          ${this.currentTab === 'weight' ? html`<weight-tab></weight-tab>` : ''}
+          ${this.currentTab === 'calories' ? html`<calories-tab></calories-tab>` : ''}
+          ${this.currentTab === 'history' ? html`<history-tab></history-tab>` : ''}
+          ${this.currentTab === 'export' ? html`<export-tab></export-tab>` : ''}
+        ` : ''}
       </div>
     `;
   }
