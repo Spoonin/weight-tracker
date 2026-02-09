@@ -70,7 +70,7 @@ export class AppTabs extends LitElement {
 
   render() {
     return html`
-      <div class="glass rounded-2xl p-4 mb-6 fade-in">
+      <div class="glass rounded-2xl p-4 mb-6 fade-in relative z-40 overflow-visible">
         <div class="flex flex-wrap gap-2 items-center justify-between">
           <div class="flex flex-wrap gap-2">
             ${this.tabs.map(tab => html`
