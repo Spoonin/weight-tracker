@@ -107,6 +107,17 @@ export class OnboardingModal extends LitElement {
     };
     store.saveConfig();
 
+    // Добавить стартовый вес в таблицу взвешиваний
+    const startDate = today.toISOString().split('T')[0];
+    store.weightData.push({
+      id: Date.now(),
+      date: startDate,
+      time: 'morning',
+      weight: v.currentWeight,
+      expected: v.currentWeight,
+    });
+    store.saveWeight();
+
     this.dispatchEvent(new CustomEvent('complete', {
       bubbles: true,
       composed: true,
