@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#1a1a2e"/>
+  <g transform="translate(256,280)" fill="none" stroke="#a78bfa" stroke-width="28" stroke-linecap="round" stroke-linejoin="round">
+    <!-- scale base -->
+    <ellipse cx="0" cy="80" rx="140" ry="36"/>
+    <!-- pillar -->
+    <line x1="0" y1="80" x2="0" y2="-60"/>
+    <!-- beam -->
+    <line x1="-120" y1="-60" x2="120" y2="-60"/>
+    <!-- left pan string -->
+    <line x1="-120" y1="-60" x2="-120" y2="-20"/>
+    <!-- right pan string -->
+    <line x1="120" y1="-60" x2="120" y2="-20"/>
+    <!-- left pan -->
+    <path d="M-160,-20 Q-120,20 -80,-20"/>
+    <!-- right pan -->
+    <path d="M80,-20 Q120,20 160,-20"/>
+    <!-- needle -->
+    <line x1="0" y1="-60" x2="0" y2="-120" stroke="#e879f9" stroke-width="24"/>
+    <!-- center dot -->
+    <circle cx="0" cy="-60" r="14" fill="#a78bfa" stroke="none"/>
+  </g>
+</svg>
