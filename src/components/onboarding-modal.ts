@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { store } from '../store';
+import { parseNum } from '../utils';
 import {
   calculateBMR,
   calculateTDEE,
@@ -41,10 +42,10 @@ export class OnboardingModal extends LitElement {
   }
 
   private updatePreview() {
-    const cw = parseFloat(this.currentWeight);
-    const tw = parseFloat(this.targetWeight);
-    const h = parseFloat(this.height);
-    const a = parseFloat(this.age);
+    const cw = parseNum(this.currentWeight);
+    const tw = parseNum(this.targetWeight);
+    const h = parseNum(this.height);
+    const a = parseNum(this.age);
     
     if (!cw || !tw || !h || !a || !this.targetDate) return;
 
@@ -71,10 +72,10 @@ export class OnboardingModal extends LitElement {
     e.preventDefault();
     
     const v = {
-      currentWeight: parseFloat(this.currentWeight),
-      targetWeight: parseFloat(this.targetWeight),
-      height: parseFloat(this.height),
-      age: parseFloat(this.age),
+      currentWeight: parseNum(this.currentWeight),
+      targetWeight: parseNum(this.targetWeight),
+      height: parseNum(this.height),
+      age: parseNum(this.age),
       gender: this.gender,
       targetDate: this.targetDate,
       activity: this.activity,
@@ -139,9 +140,9 @@ export class OnboardingModal extends LitElement {
                 <div>
                   <label class="block text-sm font-medium mb-2">Текущий вес (кг) *</label>
                   <input
-                    type="number"
-                    step="0.1"
-                    .value=${this.currentWeight}
+                    type="text"
+                    inputmode="decimal"
+                    value=${this.currentWeight}
                     @input=${(e: Event) => {
                       this.currentWeight = (e.target as HTMLInputElement).value;
                       this.updatePreview();
@@ -154,9 +155,9 @@ export class OnboardingModal extends LitElement {
                 <div>
                   <label class="block text-sm font-medium mb-2">Целевой вес (кг) *</label>
                   <input
-                    type="number"
-                    step="0.1"
-                    .value=${this.targetWeight}
+                    type="text"
+                    inputmode="decimal"
+                    value=${this.targetWeight}
                     @input=${(e: Event) => {
                       this.targetWeight = (e.target as HTMLInputElement).value;
                       this.updatePreview();

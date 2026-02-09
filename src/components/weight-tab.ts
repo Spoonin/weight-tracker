@@ -1,7 +1,7 @@
 import { LitElement, html } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { store } from '../store';
-import { todayISO, formatDate } from '../utils';
+import { todayISO, formatDate, parseNum } from '../utils';
 import { calculateExpectedWeight } from '../calculations';
 
 @customElement('weight-tab')
@@ -37,7 +37,7 @@ export class WeightTab extends LitElement {
 
     entry.date = this.editDate;
     entry.time = this.editTime;
-    entry.weight = parseFloat(this.editWeight);
+    entry.weight = parseNum(this.editWeight);
     entry.expected = calculateExpectedWeight(store.config!, this.editDate, this.editTime);
 
     store.weightData.sort(
@@ -55,7 +55,7 @@ export class WeightTab extends LitElement {
   private handleSubmit(e: Event) {
     e.preventDefault();
     
-    const weightValue = parseFloat(this.weight);
+    const weightValue = parseNum(this.weight);
     const expected = calculateExpectedWeight(store.config!, this.date, this.time);
 
     store.weightData.push({
@@ -127,8 +127,8 @@ export class WeightTab extends LitElement {
             <div>
               <label class="block text-sm font-medium mb-2">Вес (кг)</label>
               <input
-                type="number"
-                step="0.1"
+                type="text"
+                inputmode="decimal"
                 value=${this.weight}
                 @input=${(e: Event) => this.weight = (e.target as HTMLInputElement).value}
                 class="w-full px-4 py-2 rounded-lg border border-gray-300"
@@ -194,7 +194,7 @@ export class WeightTab extends LitElement {
                           </select>
                         </td>
                         <td class="py-2 px-2">
-                          <input type="number" step="0.1" value=${this.editWeight}
+                          <input type="text" inputmode="decimal" value=${this.editWeight}
                             @input=${(e: Event) => this.editWeight = (e.target as HTMLInputElement).value}
                             class="w-full px-2 py-1 rounded border border-indigo-300 text-sm text-right" />
                         </td>

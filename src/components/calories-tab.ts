@@ -1,7 +1,7 @@
 import { LitElement, html } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { store } from '../store';
-import { todayISO } from '../utils';
+import { todayISO, parseNum } from '../utils';
 
 @customElement('calories-tab')
 export class CaloriesTab extends LitElement {
@@ -49,10 +49,10 @@ export class CaloriesTab extends LitElement {
     meal.date = this.editDate;
     meal.type = this.editType;
     meal.description = this.editDescription;
-    meal.calories = parseFloat(this.editCalories) || 0;
-    meal.protein = parseFloat(this.editProtein) || 0;
-    meal.fats = parseFloat(this.editFats) || 0;
-    meal.carbs = parseFloat(this.editCarbs) || 0;
+    meal.calories = parseNum(this.editCalories) || 0;
+    meal.protein = parseNum(this.editProtein) || 0;
+    meal.fats = parseNum(this.editFats) || 0;
+    meal.carbs = parseNum(this.editCarbs) || 0;
 
     store.calorieData.sort(
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
@@ -72,10 +72,10 @@ export class CaloriesTab extends LitElement {
       date: this.date,
       type: this.type,
       description: this.description,
-      calories: parseFloat(this.calories),
-      protein: parseFloat(this.protein) || 0,
-      fats: parseFloat(this.fats) || 0,
-      carbs: parseFloat(this.carbs) || 0,
+      calories: parseNum(this.calories),
+      protein: parseNum(this.protein) || 0,
+      fats: parseNum(this.fats) || 0,
+      carbs: parseNum(this.carbs) || 0,
     });
 
     store.calorieData.sort(
@@ -157,7 +157,8 @@ export class CaloriesTab extends LitElement {
             <div>
               <label class="block text-sm font-medium mb-2">Калории</label>
               <input
-                type="number"
+                type="text"
+                inputmode="decimal"
                 value=${this.calories}
                 @input=${(e: Event) => this.calories = (e.target as HTMLInputElement).value}
                 class="w-full px-4 py-2 rounded-lg border border-gray-300"
@@ -169,8 +170,8 @@ export class CaloriesTab extends LitElement {
               <div>
                 <label class="block text-xs font-medium mb-1">Белки (г)</label>
                 <input
-                  type="number"
-                  step="0.1"
+                  type="text"
+                  inputmode="decimal"
                   value=${this.protein}
                   @input=${(e: Event) => this.protein = (e.target as HTMLInputElement).value}
                   class="w-full px-2 py-2 rounded-lg border border-gray-300 text-sm"
@@ -180,8 +181,8 @@ export class CaloriesTab extends LitElement {
               <div>
                 <label class="block text-xs font-medium mb-1">Жиры (г)</label>
                 <input
-                  type="number"
-                  step="0.1"
+                  type="text"
+                  inputmode="decimal"
                   value=${this.fats}
                   @input=${(e: Event) => this.fats = (e.target as HTMLInputElement).value}
                   class="w-full px-2 py-2 rounded-lg border border-gray-300 text-sm"
@@ -191,8 +192,8 @@ export class CaloriesTab extends LitElement {
               <div>
                 <label class="block text-xs font-medium mb-1">Углев. (г)</label>
                 <input
-                  type="number"
-                  step="0.1"
+                  type="text"
+                  inputmode="decimal"
                   value=${this.carbs}
                   @input=${(e: Event) => this.carbs = (e.target as HTMLInputElement).value}
                   class="w-full px-2 py-2 rounded-lg border border-gray-300 text-sm"
@@ -255,25 +256,25 @@ export class CaloriesTab extends LitElement {
                         <div class="grid grid-cols-4 gap-2">
                           <div>
                             <label class="block text-xs font-medium mb-1">Ккал</label>
-                            <input type="number" value=${this.editCalories}
+                            <input type="text" inputmode="decimal" value=${this.editCalories}
                               @input=${(e: Event) => this.editCalories = (e.target as HTMLInputElement).value}
                               class="w-full px-2 py-1 rounded border border-indigo-300 text-sm" />
                           </div>
                           <div>
                             <label class="block text-xs font-medium mb-1">Б (г)</label>
-                            <input type="number" step="0.1" value=${this.editProtein}
+                            <input type="text" inputmode="decimal" value=${this.editProtein}
                               @input=${(e: Event) => this.editProtein = (e.target as HTMLInputElement).value}
                               class="w-full px-2 py-1 rounded border border-indigo-300 text-sm" />
                           </div>
                           <div>
                             <label class="block text-xs font-medium mb-1">Ж (г)</label>
-                            <input type="number" step="0.1" value=${this.editFats}
+                            <input type="text" inputmode="decimal" value=${this.editFats}
                               @input=${(e: Event) => this.editFats = (e.target as HTMLInputElement).value}
                               class="w-full px-2 py-1 rounded border border-indigo-300 text-sm" />
                           </div>
                           <div>
                             <label class="block text-xs font-medium mb-1">У (г)</label>
-                            <input type="number" step="0.1" value=${this.editCarbs}
+                            <input type="text" inputmode="decimal" value=${this.editCarbs}
                               @input=${(e: Event) => this.editCarbs = (e.target as HTMLInputElement).value}
                               class="w-full px-2 py-1 rounded border border-indigo-300 text-sm" />
                           </div>

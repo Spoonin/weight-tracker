@@ -20,6 +20,11 @@ export function $(id: string): HTMLElement {
   return document.getElementById(id)!;
 }
 
+/** Parse a numeric string, accepting both dot and comma as decimal separator */
+export function parseNum(value: string): number {
+  return parseFloat(value.replace(',', '.'));
+}
+
 export function downloadFile(blob: Blob, filename: string) {
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
