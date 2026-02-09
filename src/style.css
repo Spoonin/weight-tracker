@@ -121,3 +121,19 @@ select:focus {
     height: 200px;
   }
 }
+
+/* Calibration alert */
+.calibration-alert {
+  animation: calibration-pulse 0.5s ease-out;
+}
+
+@keyframes calibration-pulse {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

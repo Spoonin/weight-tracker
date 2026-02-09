@@ -17,6 +17,7 @@
     "vite-plugin-singlefile": "^2.0.3"
   },
   "dependencies": {
-    "chart.js": "^4.4.7"
+    "chart.js": "^4.4.7",
+    "lit": "^3.3.2"
   }
 }
