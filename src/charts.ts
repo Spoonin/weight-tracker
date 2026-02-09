@@ -27,14 +27,17 @@ Chart.register(
   Filler,
 );
 
-let weightChart: Chart;
-let calorieChart: Chart;
+let weightChart: Chart | null = null;
+let calorieChart: Chart | null = null;
 
-export function initCharts() {
-  const weightCtx = (
-    document.getElementById("weightChart") as HTMLCanvasElement
-  ).getContext("2d")!;
+function ensureCharts() {
+  if (weightChart && calorieChart) return true;
 
+  const weightEl = document.getElementById("weightChart") as HTMLCanvasElement | null;
+  const calorieEl = document.getElementById("calorieChart") as HTMLCanvasElement | null;
+  if (!weightEl || !calorieEl) return false;
+
+  const weightCtx = weightEl.getContext("2d")!;
   weightChart = new Chart(weightCtx, {
     type: "line",
     data: {
@@ -60,14 +63,11 @@ export function initCharts() {
       responsive: true,
       maintainAspectRatio: false,
       plugins: { legend: { position: "top" } },
-      scales: { y: { beginAtZero: false, min: 74, max: 84 } },
+      scales: { y: { beginAtZero: false } },
     },
   });
 
-  const calorieCtx = (
-    document.getElementById("calorieChart") as HTMLCanvasElement
-  ).getContext("2d")!;
-
+  const calorieCtx = calorieEl.getContext("2d")!;
   calorieChart = new Chart(calorieCtx, {
     type: "bar",
     data: {
@@ -86,23 +86,24 @@ export function initCharts() {
       responsive: true,
       maintainAspectRatio: false,
       plugins: { legend: { display: false } },
-      scales: { y: { beginAtZero: true, max: 3000 } },
+      scales: { y: { beginAtZero: true } },
     },
   });
 
-  updateCharts();
+  return true;
 }
 
 export function updateCharts() {
+  if (!ensureCharts()) return;
   const weightLast30 = store.weightData
     .filter((w) => w.time === "morning")
     .slice(0, 30)
     .reverse();
 
-  weightChart.data.labels = weightLast30.map((w) => formatDate(w.date));
-  weightChart.data.datasets[0].data = weightLast30.map((w) => w.weight);
-  weightChart.data.datasets[1].data = weightLast30.map((w) => w.expected);
-  weightChart.update();
+  weightChart!.data.labels = weightLast30.map((w) => formatDate(w.date));
+  weightChart!.data.datasets[0].data = weightLast30.map((w) => w.weight);
+  weightChart!.data.datasets[1].data = weightLast30.map((w) => w.expected);
+  weightChart!.update();
 
   const last7Days: string[] = [];
   for (let i = 6; i >= 0; i--) {
@@ -117,7 +118,7 @@ export function updateCharts() {
       .reduce((sum, m) => sum + m.calories, 0),
   );
 
-  calorieChart.data.labels = last7Days.map((d) => formatDate(d));
-  calorieChart.data.datasets[0].data = caloriesByDay;
-  calorieChart.update();
+  calorieChart!.data.labels = last7Days.map((d) => formatDate(d));
+  calorieChart!.data.datasets[0].data = caloriesByDay;
+  calorieChart!.update();
 }
