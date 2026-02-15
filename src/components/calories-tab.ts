@@ -12,10 +12,10 @@ export class CaloriesTab extends LitElement {
   @state() private date = todayISO();
   @state() private type = 'Завтрак';
   @state() private description = '';
-  @state() private calories = '';
-  @state() private protein = '';
-  @state() private fats = '';
-  @state() private carbs = '';
+  @state() private calories = '0';
+  @state() private protein = '0';
+  @state() private fats = '0';
+  @state() private carbs = '0';
 
   // Edit state
   @state() private editingId: number | null = null;
@@ -83,11 +83,11 @@ export class CaloriesTab extends LitElement {
     );
     store.saveCalories();
 
-    this.calories = '';
+    this.calories = '0';
     this.description = '';
-    this.protein = '';
-    this.fats = '';
-    this.carbs = '';
+    this.protein = '0';
+    this.fats = '0';
+    this.carbs = '0';
     this.date = todayISO();
     this.type = 'Завтрак';
 
