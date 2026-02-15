@@ -13,13 +13,10 @@ export class DashboardTab extends LitElement {
   @state() private daysRemaining = '—';
   @state() private targetDateShort = '';
   @state() private todayCalories = 0;
-  @state() private calorieTarget = '—';
   @state() private todayProtein = 0;
   @state() private todayFats = 0;
   @state() private todayCarbs = 0;
   @state() private calorieProgress = 0;
-  @state() private caloriesRemaining = '—';
-  @state() private caloriesRemainingClass = '';
   @state() private calibration: CalibrationResult | null = null;
   @state() private showCalibrationDetails = false;
 
@@ -46,8 +43,6 @@ export class DashboardTab extends LitElement {
     this.daysRemaining = String(daysLeft);
     this.targetDateShort = `до ${new Date(c.endDate).toLocaleDateString('ru-RU')}`;
 
-    this.calorieTarget = `из ${c.dailyCalorieTarget} ккал`;
-
     const today = todayISO();
     const todayMeals = store.calorieData.filter((m) => m.date === today);
     this.todayCalories = todayMeals.reduce((sum, m) => sum + m.calories, 0);
@@ -55,15 +50,7 @@ export class DashboardTab extends LitElement {
     this.todayFats = todayMeals.reduce((sum, m) => sum + m.fats, 0);
     this.todayCarbs = todayMeals.reduce((sum, m) => sum + m.carbs, 0);
 
-    this.calorieProgress = Math.min((this.todayCalories / c.dailyCalorieTarget) * 100, 100);
-
-    const remaining = c.dailyCalorieTarget - this.todayCalories;
-    this.caloriesRemaining = remaining > 0
-      ? `Осталось: ${remaining} ккал`
-      : `Перебор: ${Math.abs(remaining)} ккал`;
-    this.caloriesRemainingClass = remaining > 0
-      ? 'text-sm font-medium text-green-600'
-      : 'text-sm font-medium text-red-600';
+    this.calorieProgress = (this.todayCalories / c.dailyCalorieTarget) * 100;
 
     // Калибровка
     this.calibration = analyzeCalibration(c, store.weightData, store.calorieData);
@@ -71,29 +58,59 @@ export class DashboardTab extends LitElement {
 
   render() {
     const c = store.config!;
+    const remaining = c.dailyCalorieTarget - this.todayCalories;
 
     return html`
       <div class="fade-in">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div class="glass stat-card rounded-xl p-6">
-            <div class="text-gray-300 text-sm mb-2">Текущий вес</div>
-            <div class="text-3xl font-bold text-white">${this.currentWeight}</div>
-            <div class="text-gray-400 text-xs mt-1">кг</div>
+        <!-- Главный индикатор калорий -->
+        <div class="glass-white rounded-2xl p-6 mb-6">
+          <div class="flex flex-col items-center text-center">
+            <div class="text-sm text-gray-500 mb-1">Съедено ${this.todayCalories} из ${c.dailyCalorieTarget} ккал</div>
+            <div class="text-5xl sm:text-6xl font-bold ${remaining < 0 ? 'text-red-500' : 'text-indigo-600'} my-2">
+              ${Math.abs(remaining)}
+            </div>
+            <div class="text-lg font-medium ${remaining < 0 ? 'text-red-400' : 'text-gray-500'} mb-4">
+              ${remaining >= 0 ? 'ккал осталось' : 'ккал перебор'}
+            </div>
+            <div class="w-full max-w-md bg-gray-200 rounded-full h-4 mb-4">
+              <div
+                class="progress-bar ${this.calorieProgress > 100 ? 'bg-gradient-to-r from-red-400 to-red-600' : 'bg-gradient-to-r from-purple-500 to-indigo-600'} h-4 rounded-full transition-all"
+                style="width: ${Math.min(this.calorieProgress, 100)}%"
+              ></div>
+            </div>
+            <div class="grid grid-cols-3 gap-6 w-full max-w-md">
+              <div class="text-center">
+                <div class="text-xl font-bold text-purple-600">${this.todayProtein.toFixed(0)}<span class="text-sm font-normal text-gray-400">/${c.proteinTarget}</span></div>
+                <div class="text-xs text-gray-500">Белки (г)</div>
+              </div>
+              <div class="text-center">
+                <div class="text-xl font-bold text-amber-600">${this.todayFats.toFixed(0)}<span class="text-sm font-normal text-gray-400">/${c.fatsTarget}</span></div>
+                <div class="text-xs text-gray-500">Жиры (г)</div>
+              </div>
+              <div class="text-center">
+                <div class="text-xl font-bold text-blue-600">${this.todayCarbs.toFixed(0)}<span class="text-sm font-normal text-gray-400">/${c.carbsTarget}</span></div>
+                <div class="text-xs text-gray-500">Углеводы (г)</div>
+              </div>
+            </div>
           </div>
-          <div class="glass stat-card rounded-xl p-6">
-            <div class="text-gray-300 text-sm mb-2">Цель</div>
-            <div class="text-3xl font-bold text-emerald-400">${this.targetWeight}</div>
-            <div class="text-gray-400 text-xs mt-1">кг</div>
+        </div>
+
+        <!-- Стат-карточки -->
+        <div class="grid grid-cols-3 gap-3 mb-6">
+          <div class="glass stat-card rounded-xl p-4 text-center">
+            <div class="text-gray-300 text-xs mb-1">Текущий вес</div>
+            <div class="text-2xl font-bold text-white">${this.currentWeight}</div>
+            <div class="text-gray-400 text-xs">кг</div>
           </div>
-          <div class="glass stat-card rounded-xl p-6">
-            <div class="text-gray-300 text-sm mb-2">Осталось дней</div>
-            <div class="text-3xl font-bold text-white">${this.daysRemaining}</div>
-            <div class="text-gray-400 text-xs mt-1">${this.targetDateShort}</div>
+          <div class="glass stat-card rounded-xl p-4 text-center">
+            <div class="text-gray-300 text-xs mb-1">Цель</div>
+            <div class="text-2xl font-bold text-emerald-400">${this.targetWeight}</div>
+            <div class="text-gray-400 text-xs">кг</div>
           </div>
-          <div class="glass stat-card rounded-xl p-6">
-            <div class="text-gray-300 text-sm mb-2">Калории сегодня</div>
-            <div class="text-3xl font-bold text-white">${this.todayCalories}</div>
-            <div class="text-gray-400 text-xs mt-1">${this.calorieTarget}</div>
+          <div class="glass stat-card rounded-xl p-4 text-center">
+            <div class="text-gray-300 text-xs mb-1">Дней</div>
+            <div class="text-2xl font-bold text-white">${this.daysRemaining}</div>
+            <div class="text-gray-400 text-xs">${this.targetDateShort}</div>
           </div>
         </div>
 
@@ -108,44 +125,6 @@ export class DashboardTab extends LitElement {
             <h3 class="text-xl font-bold mb-4">Калории за неделю</h3>
             <div class="chart-container">
               <canvas id="calorieChart"></canvas>
-            </div>
-          </div>
-        </div>
-
-        <div class="glass-white rounded-xl p-6">
-          <h3 class="text-xl font-bold mb-4">Сегодня</h3>
-          <div class="space-y-4">
-            <div>
-              <div class="flex justify-between mb-2">
-                <span class="text-sm font-medium">Калории</span>
-                <span class="text-sm text-gray-600">${this.todayCalories} / ${c.dailyCalorieTarget} ккал</span>
-              </div>
-              <div class="w-full bg-gray-200 rounded-full h-3">
-                <div
-                  class="progress-bar bg-gradient-to-r from-purple-500 to-indigo-600 h-3 rounded-full"
-                  style="width: ${this.calorieProgress}%"
-                ></div>
-              </div>
-              <div class="text-right mt-1">
-                <span class="${this.caloriesRemainingClass}">${this.caloriesRemaining}</span>
-              </div>
-            </div>
-            <div class="grid grid-cols-3 gap-4 pt-4 border-t">
-              <div class="text-center">
-                <div class="text-2xl font-bold text-purple-600">${this.todayProtein.toFixed(1)}</div>
-                <div class="text-xs text-gray-500">Белки (г)</div>
-                <div class="text-xs text-gray-400">цель: ${c.proteinTarget}г</div>
-              </div>
-              <div class="text-center">
-                <div class="text-2xl font-bold text-amber-600">${this.todayFats.toFixed(1)}</div>
-                <div class="text-xs text-gray-500">Жиры (г)</div>
-                <div class="text-xs text-gray-400">цель: ${c.fatsTarget}г</div>
-              </div>
-              <div class="text-center">
-                <div class="text-2xl font-bold text-blue-600">${this.todayCarbs.toFixed(1)}</div>
-                <div class="text-xs text-gray-500">Углеводы (г)</div>
-                <div class="text-xs text-gray-400">цель: ${c.carbsTarget}г</div>
-              </div>
             </div>
           </div>
         </div>
