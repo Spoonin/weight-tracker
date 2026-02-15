@@ -35,6 +35,14 @@ export class WeightTab extends LitElement {
     const entry = store.weightData.find((w) => w.id === this.editingId);
     if (!entry) return;
 
+    const duplicate = store.weightData.find(
+      (w) => w.id !== this.editingId && w.date === this.editDate && w.time === this.editTime,
+    );
+    if (duplicate) {
+      alert(`Взвешивание за ${this.editDate} (${this.editTime === 'morning' ? 'утро' : 'вечер'}) уже существует.`);
+      return;
+    }
+
     entry.date = this.editDate;
     entry.time = this.editTime;
     entry.weight = parseNum(this.editWeight);
@@ -54,6 +62,14 @@ export class WeightTab extends LitElement {
 
   private handleSubmit(e: Event) {
     e.preventDefault();
+
+    const duplicate = store.weightData.find(
+      (w) => w.date === this.date && w.time === this.time,
+    );
+    if (duplicate) {
+      alert(`Взвешивание за ${this.date} (${this.time === 'morning' ? 'утро' : 'вечер'}) уже существует. Удалите или отредактируйте существующую запись.`);
+      return;
+    }
     
     const weightValue = parseNum(this.weight);
     const expected = calculateExpectedWeight(store.config!, this.date, this.time);
