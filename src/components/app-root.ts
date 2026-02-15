@@ -62,7 +62,7 @@ export class AppRoot extends LitElement {
             @settings-open=${this.handleSettingsOpen}
           ></app-tabs>
 
-          ${this.currentTab === 'dashboard' ? html`<dashboard-tab></dashboard-tab>` : ''}
+          ${this.currentTab === 'dashboard' ? html`<dashboard-tab @tab-change=${this.handleTabChange}></dashboard-tab>` : ''}
           ${this.currentTab === 'weight' ? html`<weight-tab></weight-tab>` : ''}
           ${this.currentTab === 'calories' ? html`<calories-tab></calories-tab>` : ''}
           ${this.currentTab === 'history' ? html`<history-tab></history-tab>` : ''}

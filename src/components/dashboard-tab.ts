@@ -76,19 +76,17 @@ export class DashboardTab extends LitElement {
 
         <!-- Стат-карточки -->
         <div class="grid grid-cols-3 gap-3 mb-6">
-          <div class="glass stat-card rounded-xl p-4 text-center cursor-pointer hover:ring-2 hover:ring-indigo-300 transition-all"
+          <div class="glass stat-card rounded-xl p-4 text-center cursor-pointer select-none hover:ring-2 hover:ring-indigo-300 transition-all"
             @click=${() => this.navigateToTab('weight')}>
             <div class="text-gray-300 text-xs mb-1">Текущий вес</div>
             <div class="text-2xl font-bold text-white">${this.currentWeight}</div>
             <div class="text-gray-400 text-xs">кг</div>
           </div>
-          <div class="glass stat-card rounded-xl p-4 text-center">
-            <div class="text-gray-300 text-xs mb-1">Цель</div>
+          <div class="glass stat-card rounded-xl p-4 text-center select-none">
             <div class="text-2xl font-bold text-emerald-400">${this.targetWeight}</div>
             <div class="text-gray-400 text-xs">кг</div>
           </div>
-          <div class="glass stat-card rounded-xl p-4 text-center">
-            <div class="text-gray-300 text-xs mb-1">Дней</div>
+          <div class="glass stat-card rounded-xl p-4 text-center select-none">
             <div class="text-2xl font-bold text-white">${this.daysRemaining}</div>
             <div class="text-gray-400 text-xs">${this.targetDateShort}</div>
           </div>
