@@ -181,7 +181,8 @@ export class CaloriesTab extends LitElement {
     const selected = dishes.filter((_, i) => this.selectedDishIndices.has(i));
     if (selected.length === 0) return;
 
-    const names = selected.map(d => d.name).join(', ');
+    const topDish = selected.reduce((a, b) => b.calories > a.calories ? b : a);
+    const names = topDish.name;
     const totalCal = selected.reduce((s, d) => s + d.calories, 0);
     const totalP = selected.reduce((s, d) => s + d.protein, 0);
     const totalF = selected.reduce((s, d) => s + d.fats, 0);
