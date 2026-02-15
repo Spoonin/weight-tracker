@@ -1,9 +1,8 @@
-import { LitElement, html, css } from 'lit';
+import { LitElement, html } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { store } from '../store';
 import './settings-modal';
 import './onboarding-modal';
-import './app-header';
 import './app-tabs';
 import './dashboard-tab';
 import './weight-tab';
@@ -56,8 +55,6 @@ export class AppRoot extends LitElement {
         : ''}
 
       <div class="max-w-7xl mx-auto">
-        <app-header></app-header>
-        
         ${store.config ? html`
           <app-tabs 
             .currentTab=${this.currentTab}

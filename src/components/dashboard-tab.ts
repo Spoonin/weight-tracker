@@ -5,6 +5,7 @@ import { todayISO } from '../utils';
 import { daysBetween, calculateMacros } from '../calculations';
 import { updateCharts } from '../charts';
 import { analyzeCalibration, applyCalibration, type CalibrationResult } from '../calibration';
+import './calorie-indicator';
 
 @customElement('dashboard-tab')
 export class DashboardTab extends LitElement {
@@ -62,42 +63,21 @@ export class DashboardTab extends LitElement {
 
     return html`
       <div class="fade-in">
-        <!-- Главный индикатор калорий -->
-        <div class="glass-white rounded-2xl p-6 mb-6">
-          <div class="flex flex-col items-center text-center">
-            <div class="text-sm text-gray-500 mb-1">Съедено ${this.todayCalories} из ${c.dailyCalorieTarget} ккал</div>
-            <div class="text-5xl sm:text-6xl font-bold ${remaining < 0 ? 'text-red-500' : 'text-indigo-600'} my-2">
-              ${Math.abs(remaining)}
-            </div>
-            <div class="text-lg font-medium ${remaining < 0 ? 'text-red-400' : 'text-gray-500'} mb-4">
-              ${remaining >= 0 ? 'ккал осталось' : 'ккал перебор'}
-            </div>
-            <div class="w-full max-w-md bg-gray-200 rounded-full h-4 mb-4">
-              <div
-                class="progress-bar ${this.calorieProgress > 100 ? 'bg-gradient-to-r from-red-400 to-red-600' : 'bg-gradient-to-r from-purple-500 to-indigo-600'} h-4 rounded-full transition-all"
-                style="width: ${Math.min(this.calorieProgress, 100)}%"
-              ></div>
-            </div>
-            <div class="grid grid-cols-3 gap-6 w-full max-w-md">
-              <div class="text-center">
-                <div class="text-xl font-bold text-purple-600">${this.todayProtein.toFixed(0)}<span class="text-sm font-normal text-gray-400">/${c.proteinTarget}</span></div>
-                <div class="text-xs text-gray-500">Белки (г)</div>
-              </div>
-              <div class="text-center">
-                <div class="text-xl font-bold text-amber-600">${this.todayFats.toFixed(0)}<span class="text-sm font-normal text-gray-400">/${c.fatsTarget}</span></div>
-                <div class="text-xs text-gray-500">Жиры (г)</div>
-              </div>
-              <div class="text-center">
-                <div class="text-xl font-bold text-blue-600">${this.todayCarbs.toFixed(0)}<span class="text-sm font-normal text-gray-400">/${c.carbsTarget}</span></div>
-                <div class="text-xs text-gray-500">Углеводы (г)</div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <calorie-indicator
+          .todayCalories=${this.todayCalories}
+          .dailyCalorieTarget=${c.dailyCalorieTarget}
+          .todayProtein=${this.todayProtein}
+          .todayFats=${this.todayFats}
+          .todayCarbs=${this.todayCarbs}
+          .proteinTarget=${c.proteinTarget}
+          .fatsTarget=${c.fatsTarget}
+          .carbsTarget=${c.carbsTarget}
+        ></calorie-indicator>
 
         <!-- Стат-карточки -->
         <div class="grid grid-cols-3 gap-3 mb-6">
-          <div class="glass stat-card rounded-xl p-4 text-center">
+          <div class="glass stat-card rounded-xl p-4 text-center cursor-pointer hover:ring-2 hover:ring-indigo-300 transition-all"
+            @click=${() => this.navigateToTab('weight')}>
             <div class="text-gray-300 text-xs mb-1">Текущий вес</div>
             <div class="text-2xl font-bold text-white">${this.currentWeight}</div>
             <div class="text-gray-400 text-xs">кг</div>
@@ -267,6 +247,14 @@ export class DashboardTab extends LitElement {
         </button>
       </div>
     `;
+  }
+
+  private navigateToTab(tab: string) {
+    this.dispatchEvent(new CustomEvent('tab-change', {
+      detail: { tab },
+      bubbles: true,
+      composed: true,
+    }));
   }
 
   private handleApplyCalibration() {
