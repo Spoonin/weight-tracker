@@ -154,7 +154,7 @@ function parseAnalysisResult(apiResponse: Record<string, unknown>): AnalysisResu
   return result as AnalysisResult;
 }
 
-export async function analyzeFoodPhoto(imageFile: File): Promise<AnalysisResult> {
+export async function analyzeFoodPhoto(imageFile: File, signal?: AbortSignal): Promise<AnalysisResult> {
   const apiKey = getApiKey();
   if (!apiKey) {
     throw new Error('API ключ не установлен. Добавьте его в настройках.');
@@ -166,6 +166,7 @@ export async function analyzeFoodPhoto(imageFile: File): Promise<AnalysisResult>
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
+    signal,
     headers: {
       'Content-Type': 'application/json',
       'x-api-key': apiKey,

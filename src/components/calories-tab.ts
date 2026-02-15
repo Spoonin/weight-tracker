@@ -26,6 +26,8 @@ export class CaloriesTab extends LitElement {
   @state() private analyzing = false;
   @state() private analysisResult: AnalysisResult | null = null;
   @state() private analysisError = '';
+  @state() private selectedDishIndices: Set<number> = new Set();
+  private abortController: AbortController | null = null;
 
   // Edit state
   @state() private editingId: number | null = null;
@@ -138,24 +140,58 @@ export class CaloriesTab extends LitElement {
 
   private async handleAnalyze() {
     if (!this.photoFile) return;
+    this.abortController = new AbortController();
     this.analyzing = true;
     this.analysisError = '';
     this.analysisResult = null;
     try {
-      this.analysisResult = await analyzeFoodPhoto(this.photoFile);
+      const result = await analyzeFoodPhoto(this.photoFile, this.abortController.signal);
+      this.analysisResult = result;
+      // Select all dishes by default
+      if (result.dishes) {
+        this.selectedDishIndices = new Set(result.dishes.map((_, i) => i));
+      } else {
+        this.selectedDishIndices = new Set();
+      }
     } catch (err: unknown) {
-      this.analysisError = (err as Error).message || 'Ошибка анализа';
+      if ((err as DOMException).name === 'AbortError') {
+        this.analysisError = '';
+      } else {
+        this.analysisError = (err as Error).message || 'Ошибка анализа';
+      }
     } finally {
       this.analyzing = false;
+      this.abortController = null;
     }
   }
 
-  private handleApplyDish(dish: DishResult) {
-    this.description = dish.name;
-    this.calories = String(dish.calories);
-    this.protein = String(dish.protein);
-    this.fats = String(dish.fats);
-    this.carbs = String(dish.carbs);
+  private handleCancelAnalysis() {
+    this.abortController?.abort();
+  }
+
+  private toggleDish(index: number) {
+    const next = new Set(this.selectedDishIndices);
+    if (next.has(index)) next.delete(index); else next.add(index);
+    this.selectedDishIndices = next;
+  }
+
+  private handleApplySelected() {
+    const dishes = this.analysisResult?.dishes;
+    if (!dishes) return;
+    const selected = dishes.filter((_, i) => this.selectedDishIndices.has(i));
+    if (selected.length === 0) return;
+
+    const names = selected.map(d => d.name).join(', ');
+    const totalCal = selected.reduce((s, d) => s + d.calories, 0);
+    const totalP = selected.reduce((s, d) => s + d.protein, 0);
+    const totalF = selected.reduce((s, d) => s + d.fats, 0);
+    const totalC = selected.reduce((s, d) => s + d.carbs, 0);
+
+    this.description = names;
+    this.calories = String(totalCal);
+    this.protein = String(totalP);
+    this.fats = String(totalF);
+    this.carbs = String(totalC);
     this.per100g = false;
     this.mass = '';
     this.clearPhoto();
@@ -208,10 +244,16 @@ export class CaloriesTab extends LitElement {
             class="bg-blue-500 text-white px-3 py-2 rounded-lg text-sm flex-1 hover:bg-blue-600">
             📷 Выбрать фото
           </button>
-          ${this.photoFile ? html`
-            <button type="button" @click=${this.handleAnalyze} ?disabled=${this.analyzing}
-              class="bg-green-500 text-white px-3 py-2 rounded-lg text-sm flex-1 hover:bg-green-600 disabled:opacity-50">
-              ${this.analyzing ? '⏳ Анализирую...' : '🔍 Анализировать'}
+          ${this.photoFile && !this.analyzing ? html`
+            <button type="button" @click=${this.handleAnalyze}
+              class="bg-green-500 text-white px-3 py-2 rounded-lg text-sm flex-1 hover:bg-green-600">
+              🔍 Анализировать
+            </button>
+          ` : ''}
+          ${this.analyzing ? html`
+            <button type="button" @click=${this.handleCancelAnalysis}
+              class="bg-red-400 text-white px-3 py-2 rounded-lg text-sm flex-1 hover:bg-red-500">
+              ✕ Отменить
             </button>
           ` : ''}
         </div>
@@ -231,23 +273,35 @@ export class CaloriesTab extends LitElement {
 
   private renderAnalysisResults() {
     const r = this.analysisResult!;
+    const hasDishes = r.dishes && r.dishes.length > 0;
+    const selectedCount = hasDishes ? r.dishes!.filter((_, i) => this.selectedDishIndices.has(i)).length : 0;
+
     return html`
-      <div class="mt-3 space-y-3">
-        ${r.dishes?.map(dish => html`
-          <div class="p-3 bg-white rounded-lg border shadow-sm">
-            <div class="flex justify-between items-start mb-2">
-              <div class="font-semibold text-sm">${dish.name}</div>
-              ${this.confidenceBadge(dish.confidence)}
-            </div>
-            <div class="text-xs text-gray-600 mb-1">Порция: ~${dish.portion_g}г · ${dish.calories} ккал</div>
-            <div class="text-xs text-gray-500 mb-2">Б: ${dish.protein}г · Ж: ${dish.fats}г · У: ${dish.carbs}г</div>
-            ${dish.notes ? html`<div class="text-xs text-gray-400 italic mb-2">${dish.notes}</div>` : ''}
-            <button type="button" @click=${() => this.handleApplyDish(dish)}
-              class="w-full text-sm bg-indigo-500 text-white py-1.5 rounded-lg hover:bg-indigo-600">
-              Заполнить форму
-            </button>
-          </div>
-        `)}
+      <div class="mt-3 space-y-2">
+        ${hasDishes ? html`
+          ${r.dishes!.map((dish, i) => html`
+            <label class="flex items-start gap-2 p-3 bg-white rounded-lg border shadow-sm cursor-pointer
+              ${this.selectedDishIndices.has(i) ? 'ring-2 ring-indigo-300' : 'opacity-60'}">
+              <input type="checkbox" .checked=${this.selectedDishIndices.has(i)}
+                @change=${() => this.toggleDish(i)}
+                class="mt-1 accent-indigo-600" />
+              <div class="flex-1 min-w-0">
+                <div class="flex justify-between items-start mb-1">
+                  <div class="font-semibold text-sm">${dish.name}</div>
+                  ${this.confidenceBadge(dish.confidence)}
+                </div>
+                <div class="text-xs text-gray-600">~${dish.portion_g}г · ${dish.calories} ккал</div>
+                <div class="text-xs text-gray-500">Б: ${dish.protein}г · Ж: ${dish.fats}г · У: ${dish.carbs}г</div>
+                ${dish.notes ? html`<div class="text-xs text-gray-400 italic mt-1">${dish.notes}</div>` : ''}
+              </div>
+            </label>
+          `)}
+          <button type="button" @click=${this.handleApplySelected}
+            ?disabled=${selectedCount === 0}
+            class="w-full text-sm bg-indigo-500 text-white py-2 rounded-lg hover:bg-indigo-600 disabled:opacity-40 font-medium">
+            Добавить выбранное (${selectedCount})
+          </button>
+        ` : ''}
         ${r.nutritionFactsInHundredGrams ? html`
           <div class="p-3 bg-white rounded-lg border shadow-sm">
             <div class="flex justify-between items-start mb-2">
