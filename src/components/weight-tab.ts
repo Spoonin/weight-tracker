@@ -20,6 +20,16 @@ export class WeightTab extends LitElement {
   @state() private editTime: 'morning' | 'evening' = 'morning';
   @state() private editWeight = '';
 
+  private get hasDuplicate(): boolean {
+    return store.weightData.some((w) => w.date === this.date && w.time === this.time);
+  }
+
+  private get editHasDuplicate(): boolean {
+    return store.weightData.some(
+      (w) => w.id !== this.editingId && w.date === this.editDate && w.time === this.editTime,
+    );
+  }
+
   private startEdit(entry: { id: number; date: string; time: 'morning' | 'evening'; weight: number }) {
     this.editingId = entry.id;
     this.editDate = entry.date;
@@ -35,13 +45,7 @@ export class WeightTab extends LitElement {
     const entry = store.weightData.find((w) => w.id === this.editingId);
     if (!entry) return;
 
-    const duplicate = store.weightData.find(
-      (w) => w.id !== this.editingId && w.date === this.editDate && w.time === this.editTime,
-    );
-    if (duplicate) {
-      alert(`Взвешивание за ${this.editDate} (${this.editTime === 'morning' ? 'утро' : 'вечер'}) уже существует.`);
-      return;
-    }
+    if (this.editHasDuplicate) return;
 
     entry.date = this.editDate;
     entry.time = this.editTime;
@@ -63,13 +67,7 @@ export class WeightTab extends LitElement {
   private handleSubmit(e: Event) {
     e.preventDefault();
 
-    const duplicate = store.weightData.find(
-      (w) => w.date === this.date && w.time === this.time,
-    );
-    if (duplicate) {
-      alert(`Взвешивание за ${this.date} (${this.time === 'morning' ? 'утро' : 'вечер'}) уже существует. Удалите или отредактируйте существующую запись.`);
-      return;
-    }
+    if (this.hasDuplicate) return;
     
     const weightValue = parseNum(this.weight);
     const expected = calculateExpectedWeight(store.config!, this.date, this.time);
@@ -152,9 +150,13 @@ export class WeightTab extends LitElement {
                 required
               />
             </div>
+            ${this.hasDuplicate
+              ? html`<p class="text-sm text-amber-600 bg-amber-50 rounded-lg px-3 py-2">Взвешивание за эту дату и время уже есть</p>`
+              : ''}
             <button
               type="submit"
-              class="w-full btn-primary text-white font-semibold py-3 rounded-lg"
+              class="w-full btn-primary text-white font-semibold py-3 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed"
+              ?disabled=${this.hasDuplicate}
             >
               Добавить
             </button>
@@ -218,9 +220,13 @@ export class WeightTab extends LitElement {
                         <td class="py-2 px-2 text-right text-gray-400 text-sm">—</td>
                         <td class="py-2 px-2 text-right space-x-2 whitespace-nowrap">
                           <button @click=${this.saveEdit}
-                            class="text-green-600 hover:text-green-700 text-sm font-medium">Сохранить</button>
+                            class="text-green-600 hover:text-green-700 text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed"
+                            ?disabled=${this.editHasDuplicate}>Сохранить</button>
                           <button @click=${this.cancelEdit}
                             class="text-gray-500 hover:text-gray-700 text-sm">Отмена</button>
+                          ${this.editHasDuplicate
+                            ? html`<div class="text-xs text-amber-600 mt-1">Дубликат</div>`
+                            : ''}
                         </td>
                       </tr>
                     `;
