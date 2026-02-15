@@ -76,7 +76,7 @@ export class DashboardTab extends LitElement {
 
         <!-- Стат-карточки -->
         <div class="grid grid-cols-3 gap-3 mb-6">
-          <div class="glass stat-card rounded-xl p-4 text-center cursor-pointer select-none hover:ring-2 hover:ring-indigo-300 transition-all"
+          <div role="button" class="glass stat-card rounded-xl p-4 text-center cursor-pointer select-none touch-manipulation hover:ring-2 hover:ring-indigo-300 transition-all active:scale-[0.98]"
             @click=${() => this.navigateToTab('weight')}>
             <div class="text-gray-300 text-xs mb-1">Текущий вес</div>
             <div class="text-2xl font-bold text-white">${this.currentWeight}</div>

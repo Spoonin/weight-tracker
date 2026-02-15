@@ -31,7 +31,7 @@ export class CalorieIndicator extends LitElement {
       : 0;
 
     return html`
-      <div class="glass-white rounded-2xl p-6 mb-6 cursor-pointer select-none hover:ring-2 hover:ring-indigo-200 transition-all" @click=${this.handleClick}>
+      <div role="button" class="glass-white rounded-2xl p-6 mb-6 cursor-pointer select-none touch-manipulation hover:ring-2 hover:ring-indigo-200 transition-all active:scale-[0.98]" @click=${this.handleClick}>
         <div class="flex flex-col items-center text-center">
           <div class="text-sm text-gray-500 mb-1">Съедено ${this.todayCalories} из ${this.dailyCalorieTarget} ккал</div>
           <div class="text-5xl sm:text-6xl font-bold ${remaining < 0 ? 'text-red-500' : 'text-indigo-600'} my-2">
