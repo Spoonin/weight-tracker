@@ -1,13 +1,31 @@
 import { LitElement, html, css } from 'lit';
-import { customElement } from 'lit/decorators.js';
+import { customElement, state } from 'lit/decorators.js';
 import { store } from '../store';
 import { formatDateFull } from '../utils';
 import { daysBetween } from '../calculations';
+import { hasApiKey, saveApiKey, deleteApiKey } from '../ai-analysis';
 
 @customElement('settings-modal')
 export class SettingsModal extends LitElement {
   createRenderRoot() {
     return this; // Disable shadow DOM to use global Tailwind styles
+  }
+
+  @state() private apiKeyInput = '';
+  @state() private apiKeySaved = hasApiKey();
+
+  private handleSaveApiKey() {
+    const key = this.apiKeyInput.trim();
+    if (!key) return;
+    saveApiKey(key);
+    this.apiKeyInput = '';
+    this.apiKeySaved = true;
+  }
+
+  private handleDeleteApiKey() {
+    if (!confirm('Удалить API ключ?')) return;
+    deleteApiKey();
+    this.apiKeySaved = false;
   }
 
   private handleClose() {
@@ -101,6 +119,50 @@ export class SettingsModal extends LitElement {
                   <div>Жиры: <strong>${c.fatsTarget}г</strong></div>
                   <div>Углеводы: <strong>${c.carbsTarget}г</strong></div>
                 </div>
+              </div>
+            </div>
+
+            <div class="bg-gray-50 rounded-lg p-6">
+              <h3 class="font-bold text-lg mb-2">🤖 Claude AI Integration</h3>
+              <p class="text-sm text-gray-600 mb-3">
+                Для автоматического распознавания еды по фото требуется API ключ Anthropic.
+                <a href="https://console.anthropic.com/" target="_blank" class="text-blue-600 underline">
+                  Получить ключ
+                </a>
+              </p>
+
+              <div class="mb-3">
+                <label class="block text-sm font-medium mb-1">API Key</label>
+                <input type="password"
+                  .value=${this.apiKeyInput}
+                  @input=${(e: Event) => this.apiKeyInput = (e.target as HTMLInputElement).value}
+                  placeholder="sk-ant-..."
+                  class="w-full px-3 py-2 border rounded-lg text-sm" />
+              </div>
+
+              <div class="flex gap-2 mb-3">
+                <button @click=${this.handleSaveApiKey}
+                  class="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600">
+                  Сохранить
+                </button>
+                ${this.apiKeySaved ? html`
+                  <button @click=${this.handleDeleteApiKey}
+                    class="px-4 py-2 bg-red-500 text-white rounded-lg text-sm hover:bg-red-600">
+                    Удалить ключ
+                  </button>
+                ` : ''}
+              </div>
+
+              <div class="text-sm mb-3">
+                ${this.apiKeySaved
+                  ? html`<span class="text-green-600">✓ API ключ сохранён</span>`
+                  : html`<span class="text-gray-500">API ключ не установлен</span>`
+                }
+              </div>
+
+              <div class="p-3 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
+                ⚠️ API ключ хранится локально в браузере. Не используйте на общедоступных компьютерах.
+                Стоимость: ~$0.003 за фото (~$0.30/месяц при 2-3 фото в день).
               </div>
             </div>
 

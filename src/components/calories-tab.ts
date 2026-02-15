@@ -2,6 +2,7 @@ import { LitElement, html } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { store } from '../store';
 import { todayISO, parseNum } from '../utils';
+import { analyzeFoodPhoto, hasApiKey, type AnalysisResult, type DishResult, type NutritionFactsResult } from '../ai-analysis';
 
 @customElement('calories-tab')
 export class CaloriesTab extends LitElement {
@@ -18,6 +19,13 @@ export class CaloriesTab extends LitElement {
   @state() private carbs = '0';
   @state() private per100g = false;
   @state() private mass = '';
+
+  // Photo analysis state
+  @state() private photoFile: File | null = null;
+  @state() private photoPreview = '';
+  @state() private analyzing = false;
+  @state() private analysisResult: AnalysisResult | null = null;
+  @state() private analysisError = '';
 
   // Edit state
   @state() private editingId: number | null = null;
@@ -109,6 +117,156 @@ export class CaloriesTab extends LitElement {
     this.dispatchEvent(new CustomEvent('data-updated', { bubbles: true, composed: true }));
   }
 
+  // ── Photo analysis methods ──────────────────────────────────────
+
+  private triggerFileInput() {
+    const input = this.querySelector('input[type="file"]') as HTMLInputElement;
+    input?.click();
+  }
+
+  private handlePhotoSelect(e: Event) {
+    const input = e.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    this.photoFile = file;
+    this.analysisResult = null;
+    this.analysisError = '';
+    const reader = new FileReader();
+    reader.onload = () => { this.photoPreview = reader.result as string; };
+    reader.readAsDataURL(file);
+  }
+
+  private async handleAnalyze() {
+    if (!this.photoFile) return;
+    this.analyzing = true;
+    this.analysisError = '';
+    this.analysisResult = null;
+    try {
+      this.analysisResult = await analyzeFoodPhoto(this.photoFile);
+    } catch (err: unknown) {
+      this.analysisError = (err as Error).message || 'Ошибка анализа';
+    } finally {
+      this.analyzing = false;
+    }
+  }
+
+  private handleApplyDish(dish: DishResult) {
+    this.description = dish.name;
+    this.calories = String(dish.calories);
+    this.protein = String(dish.protein);
+    this.fats = String(dish.fats);
+    this.carbs = String(dish.carbs);
+    this.per100g = false;
+    this.mass = '';
+    this.clearPhoto();
+  }
+
+  private handleApplyNutritionFacts(nf: NutritionFactsResult) {
+    this.per100g = true;
+    this.description = nf.notes || '';
+    this.calories = String(nf.calories);
+    this.protein = String(nf.protein);
+    this.fats = String(nf.fats);
+    this.carbs = String(nf.carbs);
+    this.mass = nf.portion_g > 0 ? String(nf.portion_g) : '';
+    this.clearPhoto();
+  }
+
+  private clearPhoto() {
+    this.photoFile = null;
+    this.photoPreview = '';
+    this.analysisResult = null;
+    this.analysisError = '';
+    const input = this.querySelector('input[type="file"]') as HTMLInputElement;
+    if (input) input.value = '';
+  }
+
+  private confidenceBadge(confidence: string) {
+    const colors: Record<string, string> = {
+      high: 'bg-green-100 text-green-700',
+      medium: 'bg-yellow-100 text-yellow-700',
+      low: 'bg-red-100 text-red-700',
+    };
+    const labels: Record<string, string> = {
+      high: 'Высокая',
+      medium: 'Средняя',
+      low: 'Низкая',
+    };
+    return html`<span class="text-xs px-2 py-0.5 rounded-full ${colors[confidence] || ''}">${labels[confidence] || confidence}</span>`;
+  }
+
+  private renderPhotoSection() {
+    return html`
+      <div class="mb-4 p-4 border-2 border-dashed border-blue-300 rounded-xl bg-blue-50">
+        <h4 class="font-bold mb-3 flex items-center gap-2 text-sm">📸 Добавить по фото</h4>
+        <input type="file" accept="image/*" capture="environment" class="hidden" @change=${this.handlePhotoSelect} />
+        ${this.photoPreview ? html`
+          <div class="mb-3"><img src=${this.photoPreview} class="max-w-full h-48 object-contain rounded border" /></div>
+        ` : ''}
+        <div class="flex gap-2 mb-2">
+          <button type="button" @click=${this.triggerFileInput}
+            class="bg-blue-500 text-white px-3 py-2 rounded-lg text-sm flex-1 hover:bg-blue-600">
+            📷 Выбрать фото
+          </button>
+          ${this.photoFile ? html`
+            <button type="button" @click=${this.handleAnalyze} ?disabled=${this.analyzing}
+              class="bg-green-500 text-white px-3 py-2 rounded-lg text-sm flex-1 hover:bg-green-600 disabled:opacity-50">
+              ${this.analyzing ? '⏳ Анализирую...' : '🔍 Анализировать'}
+            </button>
+          ` : ''}
+        </div>
+        ${this.photoFile && !this.analyzing ? html`
+          <button type="button" @click=${this.clearPhoto} class="text-xs text-gray-500 hover:text-gray-700">✕ Очистить</button>
+        ` : ''}
+        ${!hasApiKey() ? html`
+          <div class="text-xs text-amber-600 mt-2">⚠️ Добавьте API ключ Anthropic в настройках для использования.</div>
+        ` : ''}
+        ${this.analysisError ? html`
+          <div class="text-sm text-red-600 p-2 bg-red-50 rounded mt-2">${this.analysisError}</div>
+        ` : ''}
+        ${this.analysisResult ? this.renderAnalysisResults() : ''}
+      </div>
+    `;
+  }
+
+  private renderAnalysisResults() {
+    const r = this.analysisResult!;
+    return html`
+      <div class="mt-3 space-y-3">
+        ${r.dishes?.map(dish => html`
+          <div class="p-3 bg-white rounded-lg border shadow-sm">
+            <div class="flex justify-between items-start mb-2">
+              <div class="font-semibold text-sm">${dish.name}</div>
+              ${this.confidenceBadge(dish.confidence)}
+            </div>
+            <div class="text-xs text-gray-600 mb-1">Порция: ~${dish.portion_g}г · ${dish.calories} ккал</div>
+            <div class="text-xs text-gray-500 mb-2">Б: ${dish.protein}г · Ж: ${dish.fats}г · У: ${dish.carbs}г</div>
+            ${dish.notes ? html`<div class="text-xs text-gray-400 italic mb-2">${dish.notes}</div>` : ''}
+            <button type="button" @click=${() => this.handleApplyDish(dish)}
+              class="w-full text-sm bg-indigo-500 text-white py-1.5 rounded-lg hover:bg-indigo-600">
+              Заполнить форму
+            </button>
+          </div>
+        `)}
+        ${r.nutritionFactsInHundredGrams ? html`
+          <div class="p-3 bg-white rounded-lg border shadow-sm">
+            <div class="flex justify-between items-start mb-2">
+              <div class="font-semibold text-sm">📋 Данные с упаковки (на 100г)</div>
+              ${this.confidenceBadge(r.nutritionFactsInHundredGrams.confidence)}
+            </div>
+            <div class="text-xs text-gray-600 mb-1">${r.nutritionFactsInHundredGrams.calories} ккал / 100г</div>
+            <div class="text-xs text-gray-500 mb-2">Б: ${r.nutritionFactsInHundredGrams.protein}г · Ж: ${r.nutritionFactsInHundredGrams.fats}г · У: ${r.nutritionFactsInHundredGrams.carbs}г</div>
+            ${r.nutritionFactsInHundredGrams.notes ? html`<div class="text-xs text-gray-400 italic mb-2">${r.nutritionFactsInHundredGrams.notes}</div>` : ''}
+            <button type="button" @click=${() => this.handleApplyNutritionFacts(r.nutritionFactsInHundredGrams!)}
+              class="w-full text-sm bg-indigo-500 text-white py-1.5 rounded-lg hover:bg-indigo-600">
+              Заполнить форму (на 100г)
+            </button>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }
+
   private getTodayMeals() {
     const today = todayISO();
     return store.calorieData.filter((m) => m.date === today);
@@ -124,6 +282,7 @@ export class CaloriesTab extends LitElement {
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="glass-white rounded-xl p-6">
           <h3 class="text-xl font-bold mb-4">Добавить приём пищи</h3>
+          ${this.renderPhotoSection()}
           <form @submit=${this.handleSubmit} class="space-y-4">
             <div>
               <label class="block text-sm font-medium mb-2">Дата</label>
