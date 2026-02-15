@@ -16,6 +16,8 @@ export class CaloriesTab extends LitElement {
   @state() private protein = '0';
   @state() private fats = '0';
   @state() private carbs = '0';
+  @state() private per100g = false;
+  @state() private mass = '';
 
   // Edit state
   @state() private editingId: number | null = null;
@@ -67,15 +69,17 @@ export class CaloriesTab extends LitElement {
   private handleSubmit(e: Event) {
     e.preventDefault();
 
+    const factor = this.per100g ? (parseNum(this.mass) || 0) / 100 : 1;
+
     store.calorieData.push({
       id: Date.now(),
       date: this.date,
       type: this.type,
       description: this.description,
-      calories: parseNum(this.calories),
-      protein: parseNum(this.protein) || 0,
-      fats: parseNum(this.fats) || 0,
-      carbs: parseNum(this.carbs) || 0,
+      calories: Math.round(parseNum(this.calories) * factor),
+      protein: Math.round((parseNum(this.protein) || 0) * factor),
+      fats: Math.round((parseNum(this.fats) || 0) * factor),
+      carbs: Math.round((parseNum(this.carbs) || 0) * factor),
     });
 
     store.calorieData.sort(
@@ -88,6 +92,8 @@ export class CaloriesTab extends LitElement {
     this.protein = '0';
     this.fats = '0';
     this.carbs = '0';
+    this.mass = '';
+    this.per100g = false;
     this.date = todayISO();
     this.type = 'Завтрак';
 
@@ -154,8 +160,31 @@ export class CaloriesTab extends LitElement {
                 placeholder="Что вы съели?"
               ></textarea>
             </div>
+            <div class="flex items-center gap-2 py-1">
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" .checked=${this.per100g}
+                  @change=${(e: Event) => this.per100g = (e.target as HTMLInputElement).checked}
+                  class="sr-only peer" />
+                <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+              </label>
+              <span class="text-sm text-gray-600">На 100 г (с упаковки)</span>
+            </div>
+            ${this.per100g ? html`
             <div>
-              <label class="block text-sm font-medium mb-2">Калории</label>
+              <label class="block text-sm font-medium mb-2">Масса (г)</label>
+              <input
+                type="text"
+                inputmode="decimal"
+                value=${this.mass}
+                @input=${(e: Event) => this.mass = (e.target as HTMLInputElement).value}
+                class="w-full px-4 py-2 rounded-lg border border-gray-300"
+                placeholder="150"
+                required
+              />
+            </div>
+            ` : ''}
+            <div>
+              <label class="block text-sm font-medium mb-2">Калории${this.per100g ? ' (на 100 г)' : ''}</label>
               <input
                 type="text"
                 inputmode="decimal"
@@ -168,7 +197,7 @@ export class CaloriesTab extends LitElement {
             </div>
             <div class="grid grid-cols-3 gap-2">
               <div>
-                <label class="block text-xs font-medium mb-1">Белки (г)</label>
+                <label class="block text-xs font-medium mb-1">Б${this.per100g ? '/100г' : ' (г)'}</label>
                 <input
                   type="text"
                   inputmode="decimal"
@@ -179,7 +208,7 @@ export class CaloriesTab extends LitElement {
                 />
               </div>
               <div>
-                <label class="block text-xs font-medium mb-1">Жиры (г)</label>
+                <label class="block text-xs font-medium mb-1">Ж${this.per100g ? '/100г' : ' (г)'}</label>
                 <input
                   type="text"
                   inputmode="decimal"
@@ -190,7 +219,7 @@ export class CaloriesTab extends LitElement {
                 />
               </div>
               <div>
-                <label class="block text-xs font-medium mb-1">Углев. (г)</label>
+                <label class="block text-xs font-medium mb-1">У${this.per100g ? '/100г' : ' (г)'}</label>
                 <input
                   type="text"
                   inputmode="decimal"
