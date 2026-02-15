@@ -31,6 +31,16 @@ let weightChart: Chart | null = null;
 let calorieChart: Chart | null = null;
 
 function ensureCharts() {
+  // If canvases were removed from DOM (tab switch), destroy stale instances
+  if (weightChart && !weightChart.canvas.isConnected) {
+    weightChart.destroy();
+    weightChart = null;
+  }
+  if (calorieChart && !calorieChart.canvas.isConnected) {
+    calorieChart.destroy();
+    calorieChart = null;
+  }
+
   if (weightChart && calorieChart) return true;
 
   const weightEl = document.getElementById("weightChart") as HTMLCanvasElement | null;
