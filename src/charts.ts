@@ -73,7 +73,7 @@ function ensureCharts() {
       responsive: true,
       maintainAspectRatio: false,
       plugins: { legend: { position: "top" } },
-      scales: { y: { beginAtZero: false } },
+      scales: { y: { beginAtZero: false, ...getWeightYRange() } },
     },
   });
 
@@ -103,8 +103,28 @@ function ensureCharts() {
   return true;
 }
 
+function getWeightYRange(): { min: number; max: number } {
+  const c = store.config;
+  if (!c) return { min: 50, max: 120 };
+  const lo = Math.min(c.targetWeight, c.startWeight);
+  const hi = Math.max(c.targetWeight, c.startWeight);
+  const range = hi - lo;
+  const pad = range * 0.5;
+  return {
+    min: Math.floor(lo - pad),
+    max: Math.ceil(hi + pad),
+  };
+}
+
 export function updateCharts() {
   if (!ensureCharts()) return;
+
+  // Update Y axis range in case config changed
+  const yRange = getWeightYRange();
+  const yScale = weightChart!.options.scales!['y'] as any;
+  yScale.min = yRange.min;
+  yScale.max = yRange.max;
+
   const weightLast30 = store.weightData
     .filter((w) => w.time === "morning")
     .slice(0, 30)
