@@ -86,46 +86,48 @@ async function compressImage(file: File, maxSizeMB = 1.5): Promise<File> {
 
 // ── Prompt ──────────────────────────────────────────────────────────
 
-const ANALYSIS_PROMPT = `Проанализируй фотографию еды либо данных о энергетической ценности с упаковки и определи:
-1. На фото блюдо либо данные о энергетической ценности
-2. Название блюда если актуально (на русском языке)
-3. Оценка размера порции в граммах
-4. Пищевая ценность на указанную порцию (либо на 100г в случае текста):
-   - Калории (ккал)
-   - Белки (г)
-   - Жиры (г)
-   - Углеводы (г)
+const ANALYSIS_PROMPT = `Analyze the photo of food or nutritional information from packaging and determine:
+1. Whether the photo contains a dish or nutritional information
+2. Name of the dish, if applicable
+3. Estimated portion size in grams
+4. Nutritional value for the specified portion, or per 100g if it's packaging text:
+   - Calories (kcal)
+   - Protein (g)
+   - Fats (g)
+   - Carbs (g)
 
-Если на фото несколько блюд, перечисли каждое отдельно.
-Укажи уровень уверенности в оценке (high/medium/low).
-Если невозможно точно определить блюдо или порцию, укажи это в поле notes.
+If there are multiple dishes in the photo, list each one separately.
+Indicate the confidence level of the estimate (high/medium/low).
+If it's not possible to accurately identify the dish or portion, note this in the notes field.
 
-Формат ответа - только валидный JSON без дополнительного текста, markdown или комментариев:
+If the photo shows packaging data but the nutritional value is not clearly readable, focus on text matching the pattern [number]kcal or [number]kJ (for kJ, convert to kcal using: 1 kJ = 0.239006 kcal).
+
+Response format - valid JSON only, no additional text, markdown, or comments:
 {
   "dishes": [
     {
-      "name": "название блюда",
-      "portion_g": число,
-      "calories": число,
-      "protein": число,
-      "fats": число,
-      "carbs": число,
+      "name": "dish name",
+      "portion_g": number,
+      "calories": number,
+      "protein": number,
+      "fats": number,
+      "carbs": number,
       "confidence": "high|medium|low",
-      "notes": "дополнительные замечания или пустая строка"
+      "notes": "additional remarks or empty string"
     }
   ],
   "nutritionFactsInHundredGrams": {
-    "portion_g": число если доступно либо 0,
-    "calories": число,
-    "protein": число,
-    "fats": число,
-    "carbs": число,
+    "portion_g": number if available or 0,
+    "calories": number,
+    "protein": number,
+    "fats": number,
+    "carbs": number,
     "confidence": "high|medium|low",
-    "notes": "дополнительные замечания или пустая строка"
+    "notes": "additional remarks or empty string"
   }
 }
 
-Включай массив "dishes" только если на фото блюда. Включай "nutritionFactsInHundredGrams" только если на фото текст с упаковки. Не включай оба одновременно.`;
+Include the "dishes" array only if the photo contains dishes. Include "nutritionFactsInHundredGrams" only if the photo contains packaging text. Do not include both at the same time.`;
 
 // ── API call ────────────────────────────────────────────────────────
 
@@ -133,13 +135,13 @@ function handleApiError(status: number, errorData: Record<string, unknown>): str
   const msg = (errorData as any).error?.message;
   switch (status) {
     case 401:
-      return 'Неверный API ключ. Проверьте ключ в настройках.';
+      return 'Invalid API key. Check the key in settings.';
     case 429:
-      return 'Превышен лимит запросов. Попробуйте позже.';
+      return 'Rate limit exceeded. Try again later.';
     case 400:
-      return 'Ошибка в запросе: ' + (msg || 'неизвестная ошибка');
+      return 'Request error: ' + (msg || 'unknown error');
     default:
-      return 'Ошибка API: ' + (msg || status);
+      return 'API error: ' + (msg || status);
   }
 }
 
@@ -149,7 +151,7 @@ function parseAnalysisResult(apiResponse: Record<string, unknown>): AnalysisResu
 
   const result = JSON.parse(text);
   if (!result.dishes && !result.nutritionFactsInHundredGrams) {
-    throw new Error('Некорректный формат ответа от API');
+    throw new Error('Invalid response format from API');
   }
   return result as AnalysisResult;
 }
@@ -157,7 +159,7 @@ function parseAnalysisResult(apiResponse: Record<string, unknown>): AnalysisResu
 export async function analyzeFoodPhoto(imageFile: File, signal?: AbortSignal): Promise<AnalysisResult> {
   const apiKey = getApiKey();
   if (!apiKey) {
-    throw new Error('API ключ не установлен. Добавьте его в настройках.');
+    throw new Error('API key not set. Add it in settings.');
   }
 
   const compressed = await compressImage(imageFile);

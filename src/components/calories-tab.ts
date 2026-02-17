@@ -13,10 +13,10 @@ export class CaloriesTab extends LitElement {
   @state() private date = todayISO();
   @state() private type = 'Завтрак';
   @state() private description = '';
-  @state() private calories = '0';
-  @state() private protein = '0';
-  @state() private fats = '0';
-  @state() private carbs = '0';
+  @state() private calories = '';
+  @state() private protein = '';
+  @state() private fats = '';
+  @state() private carbs = '';
   @state() private per100g = false;
   @state() private mass = '';
 
@@ -97,11 +97,11 @@ export class CaloriesTab extends LitElement {
     );
     store.saveCalories();
 
-    this.calories = '0';
+    this.calories = '';
     this.description = '';
-    this.protein = '0';
-    this.fats = '0';
-    this.carbs = '0';
+    this.protein = '';
+    this.fats = '';
+    this.carbs = '';
     this.mass = '';
     this.per100g = false;
     this.date = todayISO();
@@ -446,7 +446,8 @@ export class CaloriesTab extends LitElement {
             </div>
             <button
               type="submit"
-              class="w-full btn-primary text-white font-semibold py-3 rounded-lg"
+              ?disabled=${!this.calories.trim() || isNaN(parseNum(this.calories)) || parseNum(this.calories) <= 0}
+              class="w-full btn-primary text-white font-semibold py-3 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Добавить
             </button>
