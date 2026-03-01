@@ -178,17 +178,22 @@ export function analyzeCalibration(
     (((config.startWeight - config.targetWeight) / totalDays) * 7).toFixed(2),
   );
 
-  // Фактическая скорость за окно (сравнение самого старого и нового в окне)
-  const oldest = avgResult.entries[avgResult.entries.length - 1];
-  const newest = avgResult.entries[0];
-  const windowActualDays = Math.max(
-    1,
-    (new Date(newest.date).getTime() - new Date(oldest.date).getTime()) /
-      (1000 * 60 * 60 * 24),
-  );
-  const actualWeeklyRate = parseFloat(
-    (((oldest.weight - newest.weight) / windowActualDays) * 7).toFixed(2),
-  );
+  // Фактическая скорость за окно (линейная регрессия по всем точкам для сглаживания)
+  const entries = avgResult.entries; // отсортированы от новых к старым
+  const oldestDate = new Date(entries[entries.length - 1].date).getTime();
+  const points = entries.map((e) => ({
+    day: (new Date(e.date).getTime() - oldestDate) / (1000 * 60 * 60 * 24),
+    weight: e.weight,
+  }));
+  const n = points.length;
+  const sumX = points.reduce((s, p) => s + p.day, 0);
+  const sumY = points.reduce((s, p) => s + p.weight, 0);
+  const sumXY = points.reduce((s, p) => s + p.day * p.weight, 0);
+  const sumX2 = points.reduce((s, p) => s + p.day * p.day, 0);
+  const denom = n * sumX2 - sumX * sumX;
+  // slope = кг/день (отрицательный = потеря веса)
+  const slope = denom !== 0 ? (n * sumXY - sumX * sumY) / denom : 0;
+  const actualWeeklyRate = parseFloat((-slope * 7).toFixed(2));
 
   // Оценка реального TDEE (берём 14-дневное окно для стабильности)
   const realTDEE = estimateRealTDEE(weightData, calorieData, 14);
