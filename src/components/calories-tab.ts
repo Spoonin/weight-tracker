@@ -367,7 +367,7 @@ export class CaloriesTab extends LitElement {
             <div>
               <label class="block text-sm font-medium mb-2">Описание</label>
               <textarea
-                value=${this.description}
+                .value=${this.description}
                 @input=${(e: Event) => this.description = (e.target as HTMLTextAreaElement).value}
                 class="w-full px-4 py-2 rounded-lg border border-gray-300"
                 rows="2"
@@ -389,7 +389,7 @@ export class CaloriesTab extends LitElement {
               <input
                 type="text"
                 inputmode="decimal"
-                value=${this.mass}
+                .value=${this.mass}
                 @input=${(e: Event) => this.mass = (e.target as HTMLInputElement).value}
                 class="w-full px-4 py-2 rounded-lg border border-gray-300"
                 placeholder="150"
@@ -402,7 +402,7 @@ export class CaloriesTab extends LitElement {
               <input
                 type="text"
                 inputmode="decimal"
-                value=${this.calories}
+                .value=${this.calories}
                 @input=${(e: Event) => this.calories = (e.target as HTMLInputElement).value}
                 class="w-full px-4 py-2 rounded-lg border border-gray-300"
                 placeholder="0"
@@ -415,7 +415,7 @@ export class CaloriesTab extends LitElement {
                 <input
                   type="text"
                   inputmode="decimal"
-                  value=${this.protein}
+                  .value=${this.protein}
                   @input=${(e: Event) => this.protein = (e.target as HTMLInputElement).value}
                   class="w-full px-2 py-2 rounded-lg border border-gray-300 text-sm"
                   placeholder="0"
@@ -426,7 +426,7 @@ export class CaloriesTab extends LitElement {
                 <input
                   type="text"
                   inputmode="decimal"
-                  value=${this.fats}
+                  .value=${this.fats}
                   @input=${(e: Event) => this.fats = (e.target as HTMLInputElement).value}
                   class="w-full px-2 py-2 rounded-lg border border-gray-300 text-sm"
                   placeholder="0"
@@ -437,7 +437,7 @@ export class CaloriesTab extends LitElement {
                 <input
                   type="text"
                   inputmode="decimal"
-                  value=${this.carbs}
+                  .value=${this.carbs}
                   @input=${(e: Event) => this.carbs = (e.target as HTMLInputElement).value}
                   class="w-full px-2 py-2 rounded-lg border border-gray-300 text-sm"
                   placeholder="0"
